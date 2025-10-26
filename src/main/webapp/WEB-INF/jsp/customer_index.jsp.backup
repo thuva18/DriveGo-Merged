@@ -1,0 +1,379 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveGo - Go anywhere with DriveGo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #000000 !important;
+            border-bottom: 1px solid #333;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-menu a:hover {
+            background-color: #333;
+            color: #00ff88;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            color: #00ff88;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background-color: #00ff88;
+            color: #000000;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #00cc6a;
+        }
+
+        .login-btn {
+            background-color: #00ff88;
+            color: #000000;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+            margin-left: 0.5rem;
+        }
+
+        .login-btn:hover {
+            background-color: #00cc6a;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Banner Section */
+        .banner-section {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #000000;
+            text-align: center;
+            padding: 4rem 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .banner-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .banner-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Browse Vehicles Section */
+        .browse-section {
+            padding: 3rem 2rem;
+            text-align: center;
+            background-color: #f8f9fa;
+            margin-bottom: 3rem;
+        }
+
+        .browse-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #000000;
+        }
+
+        .browse-subtitle {
+            font-size: 1.2rem;
+            color: #666666;
+            margin-bottom: 2rem;
+        }
+
+        .browse-btn {
+            background-color: #00ff88;
+            color: #000000;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+
+        .browse-btn:hover {
+            background-color: #00cc6a;
+        }
+
+        /* Suggestions Section */
+        .suggestions-section {
+            padding: 3rem 2rem;
+            background-color: #ffffff;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #000000;
+            text-align: center;
+        }
+
+        .suggestions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .suggestion-card {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .suggestion-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2);
+        }
+
+        .suggestion-icon {
+            font-size: 3rem;
+            color: #00ff88;
+            margin-bottom: 1rem;
+        }
+
+        .suggestion-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #000000;
+        }
+
+        .suggestion-desc {
+            color: #666666;
+            line-height: 1.6;
+        }
+
+        .details-btn {
+            background: none;
+            border: none;
+            color: #00ff88;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .details-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .suggestions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" style="background-color: #000000 !important; color: white !important;">
+        <div class="logo" style="color: white !important;">
+            <img src="/img/drive gow_.png" alt="DriveGo">
+            DriveGo
+        </div>
+        
+        <nav class="nav-menu">
+            <a href="/customer/home" style="color: white !important;">Home</a>
+            <a href="/customer/vehicles" style="color: white !important;">Browse Vehicles</a>
+            <a href="/customer/my-bookings" style="color: white !important;">My Bookings</a>
+            <a href="/customer/contact" style="color: white !important;">Contact Us</a>
+        </nav>
+
+        <div class="user-menu">
+            <c:if test="${not empty user}">
+                <span class="user-info" style="color: white !important;">Welcome, ${user.name}</span>
+                <form action="/logout" method="post" style="display: inline;">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                    <button type="submit" class="logout-btn" style="background-color: #00ff88 !important; color: white !important;">Log out</button>
+                </form>
+            </c:if>
+            <c:if test="${empty user}">
+                <a href="/login" class="login-btn" style="background-color: #00ff88 !important; color: white !important;">Log in</a>
+                <a href="/register" class="login-btn">Sign up</a>
+            </c:if>
+        </div>
+    </header>
+
+    <!-- Banner Section -->
+    <section class="banner-section">
+        <h1 class="banner-title">Go anywhere with DriveGo</h1>
+        <p class="banner-subtitle">Your reliable partner for all your transportation needs</p>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Browse Vehicles Section -->
+        <section class="browse-section">
+            <h2 class="browse-title">Find Your Perfect Ride</h2>
+            <p class="browse-subtitle">Choose from our wide selection of vehicles for your journey</p>
+            <a href="/customer/vehicles" class="browse-btn">Browse Vehicles</a>
+        </section>
+
+        <!-- Suggestions Section -->
+        <section class="suggestions-section">
+            <h2 class="section-title">Suggestions</h2>
+            <div class="suggestions-grid">
+                <div class="suggestion-card" onclick="window.location.href='/customer/vehicles'">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3 class="suggestion-title">Economy Cars</h3>
+                    <p class="suggestion-desc">Affordable and comfortable rides for your daily commute and short trips.</p>
+                    <button class="details-btn">Browse Now</button>
+                </div>
+
+                <div class="suggestion-card" onclick="window.location.href='/customer/vehicles?type=premium'">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3 class="suggestion-title">Premium Cars</h3>
+                    <p class="suggestion-desc">Experience luxury and comfort with our premium vehicle selection.</p>
+                    <button class="details-btn">Browse Now</button>
+                </div>
+
+                <div class="suggestion-card" onclick="window.location.href='/customer/vehicles?type=suv'">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3 class="suggestion-title">SUVs & Large Cars</h3>
+                    <p class="suggestion-desc">Perfect for group travel and family trips with extra space and comfort.</p>
+                    <button class="details-btn">Browse Now</button>
+                </div>
+
+                <div class="suggestion-card" onclick="window.location.href='/customer/vehicles?type=electric'">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <h3 class="suggestion-title">Electric Vehicles</h3>
+                    <p class="suggestion-desc">Eco-friendly electric cars for sustainable transportation.</p>
+                    <button class="details-btn">Browse Now</button>
+                </div>
+
+                <div class="suggestion-card" onclick="window.location.href='/customer/vehicles?type=van'">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-shuttle-van"></i>
+                    </div>
+                    <h3 class="suggestion-title">Vans & Cargo</h3>
+                    <p class="suggestion-desc">Spacious vehicles for moving, deliveries, and large group transportation.</p>
+                    <button class="details-btn">Browse Now</button>
+                </div>
+
+                <div class="suggestion-card" onclick="window.location.href='/customer/vehicles?type=motorcycle'">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </div>
+                    <h3 class="suggestion-title">Motorcycles</h3>
+                    <p class="suggestion-desc">Quick and efficient two-wheeler options for fast city travel.</p>
+                    <button class="details-btn">Browse Now</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+
+</body>
+</html>

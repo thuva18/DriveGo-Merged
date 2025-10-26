@@ -1,0 +1,152 @@
+package com.drivego.report;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.net.URI;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/reports")
+public class ReportApiController {
+    private final ReportRepository repo;
+    private final ReportService generator;
+
+    public ReportApiController(ReportRepository repo, ReportService generator) {
+        this.repo = repo; this.generator = generator;
+    }
+
+    // Create and persist a report (generates payload using existing generator)
+    @PostMapping
+    public ResponseEntity<?> create(@RequestBody CreateReportRequest body) {
+        if (body == null || isBlank(body.getType()) || isBlank(body.getFrom()) || isBlank(body.getTo())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "type, from, to are required"));
+        }
+        if (body.getFrom().compareTo(body.getTo()) > 0) {
+            return ResponseEntity.badRequest().body(Map.of("error", "from cannot be after to"));
+        }
+        Map<String,Object> model;
+        try {
+            model = generator.generate(body.getType(), body.getFrom(), body.getTo());
+        } catch (Exception ex) {
+            model = Map.of(
+                    "chartTitle", "Report",
+                    "error", "Generation failed: " + ex.getMessage());
+        }
+        Report r = new Report();
+        r.setType(body.getType());
+        r.setFromDate(LocalDate.now());
+        r.setPayload(Jsons.stringify(model));
+
+        Report saved = repo.save(r);
+        return ResponseEntity.created(URI.create("/api/reports/" + saved.getId())).body(Map.of("id", saved.getId()));
+    }
+
+    // Read all
+    @GetMapping
+    public List<Report> list() { return repo.findAll(); }
+
+    // Read one
+    @GetMapping("/{id}")
+    public ResponseEntity<?> get(@PathVariable Long id) {
+        return repo.findById(id).<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "Not found")));
+    }
+
+    // Update metadata and/or regenerate
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody UpdateReportRequest body) {
+        var existing = repo.findById(id);
+        if (existing.isEmpty()) return ResponseEntity.status(404).body(Map.of("error", "Not found"));
+
+        Report r = existing.get();
+        if (body.getType() != null) r.setType(body.getType());
+
+        if (Boolean.TRUE.equals(body.getRegenerate())) {
+            String type = r.getType();
+            String from = body.getFrom() != null ? body.getFrom() : LocalDate.now().minusMonths(1).toString();
+            String to = body.getTo() != null ? body.getTo() : LocalDate.now().toString();
+            try {
+                var model = generator.generate(type, from, to);
+                r.setPayload(Jsons.stringify(model));
+            } catch (Exception ex) {
+                r.setPayload(Jsons.stringify(Map.of("error", "Generation failed: " + ex.getMessage())));
+            }
+        } else if (body.getPayload() != null) {
+            r.setPayload(body.getPayload());
+        }
+
+        Report saved = repo.save(r);
+        return ResponseEntity.ok(Map.of("updated", 1, "id", saved.getId()));
+    }
+
+    // Delete
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            repo.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body(Map.of("error", "Not found"));
+        }
+    }
+
+    private String defaultName(String type, String from, String to) {
+        return (type + "-" + from + "_to_" + to).toUpperCase();
+    }
+    private boolean isBlank(String s){ return s==null || s.trim().isEmpty(); }
+
+    // DTOs
+    public static class CreateReportRequest {
+        private String name;
+        private String type;
+        private String from; // yyyy-MM-dd
+        private String to;   // yyyy-MM-dd
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+        public String getFrom() { return from; }
+        public void setFrom(String from) { this.from = from; }
+        public String getTo() { return to; }
+        public void setTo(String to) { this.to = to; }
+    }
+
+    public static class UpdateReportRequest {
+        private String name;
+        private String type;
+        private String from;
+        private String to;
+        private String payload; // optional manual override
+        private Boolean regenerate; // if true, regenerate from type/from/to
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+        public String getFrom() { return from; }
+        public void setFrom(String from) { this.from = from; }
+        public String getTo() { return to; }
+        public void setTo(String to) { this.to = to; }
+        public String getPayload() { return payload; }
+        public void setPayload(String payload) { this.payload = payload; }
+        public Boolean getRegenerate() { return regenerate; }
+        public void setRegenerate(Boolean regenerate) { this.regenerate = regenerate; }
+    }
+}
+
+// Minimal JSON helper using Jackson if available; else naive
+class Jsons {
+    static String stringify(Object o) {
+        try {
+            // Try Jackson if on classpath (often included with spring-boot-starter-web)
+            com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+            return om.writeValueAsString(o);
+        } catch (Throwable t) {
+            return String.valueOf(o);
+        }
+    }
+}

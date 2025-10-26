@@ -1,0 +1,267 @@
+package com.drivego.payment;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+
+
+@Controller
+@RequestMapping("/payments")
+public class PaymentController {
+    
+    private final PaymentService paymentService;
+    
+    @Autowired
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+    
+    // Admin: View all payments
+    @GetMapping
+    public String listPayments(Model model,
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "10") int size) {
+        try {
+            PaymentDTOS.ListResponse response = paymentService.getAllPayments(page, size);
+            model.addAttribute("payments", response.getPayments());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", response.getTotalPages());
+            model.addAttribute("totalElements", response.getTotalElements());
+            return "payments/list";
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to load payments: " + e.getMessage());
+            return "payments/list";
+        }
+    }
+    
+    // Admin: View payment details
+    @GetMapping("/{id}")
+    public String viewPayment(@PathVariable Integer id, Model model) {
+        try {
+            PaymentDTOS.Response payment = paymentService.getPaymentById(id);
+            model.addAttribute("payment", payment);
+            return "payments/view";
+        } catch (Exception e) {
+            model.addAttribute("error", "Payment not found");
+            return "redirect:/payments";
+        }
+    }
+
+    // Admin: Show create payment form
+    @GetMapping("/new")
+    public String newPaymentForm(Model model) {
+        model.addAttribute("payment", new PaymentDTOS.CreateRequest());
+        return "payments/form";
+    }
+
+    // Admin: Process payment
+    @PostMapping
+    public String processPayment(@ModelAttribute PaymentDTOS.CreateRequest request,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            PaymentDTOS.Response response = paymentService.createPayment(request);
+            redirectAttributes.addFlashAttribute("success", "Payment processed successfully with ID: " + response.getId());
+            return "redirect:/payments/" + response.getId();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to process payment: " + e.getMessage());
+            return "redirect:/payments/new";
+        }
+    }
+    
+    // Admin: Update payment status
+    @PostMapping("/{id}/status")
+    public String updatePaymentStatus(@PathVariable Integer id,
+                                    @RequestParam String status,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            paymentService.updatePaymentStatus(id, status);
+            redirectAttributes.addFlashAttribute("success", "Payment status updated successfully");
+            return "redirect:/payments/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to update payment status: " + e.getMessage());
+            return "redirect:/payments/" + id;
+        }
+    }
+
+    // Admin: Process refund
+    @PostMapping("/{id}/refund")
+    public String processRefund(@PathVariable Integer id,
+                              @RequestParam(required = false) String reason,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            paymentService.updatePaymentStatus(id, "Failed");
+            redirectAttributes.addFlashAttribute("success", "Payment refunded successfully");
+            return "redirect:/payments/" + id;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to process refund: " + e.getMessage());
+            return "redirect:/payments/" + id;
+        }
+    }
+
+    // Admin: Payment statistics dashboard
+    @GetMapping("/stats")
+    public String paymentStatistics(Model model) {
+        try {
+            PaymentDTOS.StatsResponse stats = paymentService.getPaymentStats();
+            model.addAttribute("stats", stats);
+            return "payments/stats";
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to load payment statistics: " + e.getMessage());
+            return "payments/stats";
+        }
+    }
+
+    // Admin: Search payments with filters
+    // TODO: Fix method signatures and re-enable
+    /*
+    @GetMapping("/search")
+    public String searchPayments(@RequestParam(required = false) Long bookingId,
+                               @RequestParam(required = false) String status,
+                               @RequestParam(required = false) String method,
+                               @RequestParam(defaultValue = "0") int page,
+                               @RequestParam(defaultValue = "10") int size,
+                               Model model) {
+        try {
+            PaymentDTOS.SearchRequest searchRequest = new PaymentDTOS.SearchRequest();
+            searchRequest.setBookingId(bookingId);
+            searchRequest.setStatus(status);
+            searchRequest.setMethod(method);
+            searchRequest.setPage(page);
+            searchRequest.setSize(size);
+            
+            PaymentDTOS.ListResponse response = paymentService.searchPayments(searchRequest);
+            model.addAttribute("payments", response.getPayments());
+            model.addAttribute("currentPage", page);
+            model.addAttribute("totalPages", response.getTotalPages());
+            model.addAttribute("totalElements", response.getTotalElements());
+            model.addAttribute("bookingId", bookingId);
+            model.addAttribute("status", status);
+            model.addAttribute("method", method);
+            return "payments/search";
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to search payments: " + e.getMessage());
+            return "payments/search";
+        }
+    }
+    */
+
+}
+
+// API Controller for REST endpoints
+@RestController
+@RequestMapping("/api/payments")
+@CrossOrigin(origins = "*")
+class PaymentApiController {
+
+    private final PaymentService paymentService;
+
+    @Autowired
+    public PaymentApiController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+
+    @PostMapping
+    public ResponseEntity<PaymentDTOS.Response> createPayment(@RequestBody PaymentDTOS.CreateRequest request) {
+        try {
+            PaymentDTOS.Response response = paymentService.createPayment(request);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentDTOS.Response> getPaymentById(@PathVariable Integer id) {
+        try {
+            PaymentDTOS.Response response = paymentService.getPaymentById(id);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    
+    @GetMapping
+    public ResponseEntity<PaymentDTOS.ListResponse> getAllPayments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            PaymentDTOS.ListResponse response = paymentService.getAllPayments(page, size);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<PaymentDTOS.Response> updatePaymentStatus(@PathVariable Integer id,
+                                                                  @RequestBody PaymentDTOS.UpdateStatusRequest request) {
+        try {
+            PaymentDTOS.Response response = paymentService.updatePaymentStatus(id, request.getStatus());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PostMapping("/{id}/refund")
+    public ResponseEntity<PaymentDTOS.Response> processRefund(@PathVariable Integer id,
+                                                            @RequestBody PaymentDTOS.UpdateStatusRequest request) {
+        try {
+            PaymentDTOS.Response response = paymentService.updatePaymentStatus(id, "Failed");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @GetMapping("/booking/{bookingId}")
+    public ResponseEntity<List<PaymentDTOS.Response>> getPaymentsByBookingId(@PathVariable Integer bookingId) {
+        try{
+            List<PaymentDTOS.Response> payments = paymentService.getPaymentsByBookingId(bookingId);
+            return new ResponseEntity<>(payments, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<PaymentDTOS.StatsResponse> getPaymentStatistics() {
+        try {
+            PaymentDTOS.StatsResponse stats = paymentService.getPaymentStats();
+            return new ResponseEntity<>(stats, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // TODO: Fix method signatures and re-enable
+    /*
+    @GetMapping("/search")
+    public ResponseEntity<PaymentDTOS.ListResponse> searchPayments(
+            @RequestParam(required = false) Long bookingId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String method,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            PaymentDTOS.SearchRequest searchRequest = new PaymentDTOS.SearchRequest();
+            searchRequest.setBookingId(bookingId);
+            searchRequest.setStatus(status);
+            searchRequest.setMethod(method);
+            searchRequest.setPage(page);
+            searchRequest.setSize(size);
+            
+            PaymentDTOS.ListResponse response = paymentService.searchPayments(searchRequest);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    */
+}

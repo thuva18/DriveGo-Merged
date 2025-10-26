@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Vehicle Management</title>
+    <link rel="stylesheet" th:href="@{static/css/style.css}"/>
+</head>
+<body>
+<div style="background-color: #1a252f; color: #ffffff; padding: 10px;">
+    <h1 style="margin: 0;">Vehicle Management Menu</h1>
+</div>
+<div style="padding: 20px; background-color: #f5f7fa;">
+    <a th:href="@{/vehicles/new}" style="background-color: #2ecc71; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Add New Vehicle</a>
+    <table style="border-collapse: collapse; width: 100%; margin-top: 20px; background-color: #ffffff; border-radius: 5px; overflow: hidden;">
+        <thead>
+        <tr style="background-color: #2ecc71; color: #ffffff;">
+            <th style="border: 1px solid #ddd; padding: 12px;">Reg No</th>
+            <th style="border: 1px solid #ddd; padding: 12px;">Model</th>
+            <th style="border: 1px solid #ddd; padding: 12px;">Mileage</th>
+            <th style="border: 1px solid #ddd; padding: 12px;">Rental Price</th>
+            <th style="border: 1px solid #ddd; padding: 12px;">Fuel Type</th>
+            <th style="border: 1px solid #ddd; padding: 12px;">Maintenance History</th>
+            <th style="border: 1px solid #ddd; padding: 12px;">Availability</th>
+            <th style="border: 1px solid #ddd; padding: 12px;">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="vehicle : ${vehicles}" style="border-bottom: 1px solid #ddd;">
+            <td th:text="${vehicle.regNo}" style="padding: 12px;"></td>
+            <td th:text="${vehicle.model}" style="padding: 12px;"></td>
+            <td th:text="${vehicle.mileage}" style="padding: 12px;"></td>
+            <td th:text="${vehicle.rentalPrice}" style="padding: 12px;"></td>
+            <td th:text="${vehicle.fuelType}" style="padding: 12px;"></td>
+            <td th:text="${vehicle.maintenanceHistory}" style="padding: 12px;"></td>
+            <td th:text="${vehicle.availability}" style="padding: 12px;"></td>
+            <td style="padding: 12px;">
+                <a th:href="@{/vehicles/edit/{regNo}(regNo=${vehicle.regNo})}" style="color: #2ecc71; text-decoration: none; margin-right: 10px;">Edit</a>
+                <a th:href="@{/vehicles/delete/{regNo}(regNo=${vehicle.regNo})}" onclick="return confirm('Are you sure you want to delete this vehicle?');" style="color: #e74c3c; text-decoration: none;">Delete</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div th:if="${error}" th:text="${error}" style="color: #e74c3c; margin-top: 10px;"></div>
+</div>
+</body>
+</html>

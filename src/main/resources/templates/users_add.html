@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Add User - DriveGo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/auth-theme.css}" href="/css/auth-theme.css"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body class="drivego-body">
+<div class="page-wrapper fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="glass-card p-0">
+                <div class="glass-card-header bg-transparent px-5 pt-5">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <div class="glass-card-title">Add User</div>
+                </div>
+                <div class="glass-card-body px-5 pb-5">
+                    <form th:action="@{/users/save}" th:object="${user}" method="post" class="auth-form">
+                        <div class="mb-3 auth-input-group">
+                            <label class="form-label" for="firstName">First Name</label>
+                            <input type="text" id="firstName" th:field="*{firstName}" class="form-control auth-input" placeholder="First name" required/>
+                            <p th:errors="*{firstName}" class="text-danger mt-2 mb-0"></p>
+                        </div>
+                        <div class="mb-3 auth-input-group">
+                            <label class="form-label" for="lastName">Last Name</label>
+                            <input type="text" id="lastName" th:field="*{lastName}" class="form-control auth-input" placeholder="Last name" required/>
+                            <p th:errors="*{lastName}" class="text-danger mt-2 mb-0"></p>
+                        </div>
+                        <div class="mb-3 auth-input-group">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" id="email" th:field="*{email}" class="form-control auth-input" placeholder="Email" required/>
+                            <p th:errors="*{email}" class="text-danger mt-2 mb-0"></p>
+                        </div>
+                        <div class="mb-4 auth-input-group">
+                            <label class="form-label" for="password">Password</label>
+                            <input type="password" id="password" th:field="*{password}" class="form-control auth-input" placeholder="Password" required/>
+                            <p th:errors="*{password}" class="text-danger mt-2 mb-0"></p>
+                        </div>
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-stretch gap-3">
+                            <a class="hero-cta-secondary text-center" th:href="@{/users}"><i class="fa-solid fa-arrow-left me-2"></i>Cancel</a>
+                            <button type="submit" class="btn drivego-btn-primary w-100 w-sm-auto"><i class="fa-solid fa-plus me-2"></i>Create User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

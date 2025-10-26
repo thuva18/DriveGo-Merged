@@ -1,0 +1,391 @@
+package com.drivego.customer;
+
+import com.drivego.booking.CarBookingDTOS;
+import com.drivego.booking.CarBookingService;
+import com.drivego.dto.UserDto;
+import com.drivego.entity.User;
+import com.drivego.user.UserService;
+import com.drivego.vehicle.Vehicle;
+import com.drivego.vehicle.VehicleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Controller
+public class CustomerController {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private VehicleService vehicleService;
+
+    @Autowired
+    private CarBookingService bookingService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @GetMapping("/")
+    public String home(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String fuelType,
+            @RequestParam(required = false) String availability,
+            @RequestParam(required = false, defaultValue = "model") String sortBy,
+            Model model,
+            @AuthenticationPrincipal UserDetails currentUser) {
+        
+        // Directly show vehicle browse page on home - no redirect needed
+        // This allows public access without any authentication
+        
+        if (currentUser != null) {
+            User user = userService.findUserByEmail(currentUser.getUsername());
+            model.addAttribute("userName", user.getName());
+            model.addAttribute("isLoggedIn", true);
+        } else {
+            model.addAttribute("userName", "Guest");
+            model.addAttribute("isLoggedIn", false);
+        }
+
+        // Get all vehicles
+        List<Vehicle> vehicles = vehicleService.getAllVehicles();
+
+        // Apply filters
+        if (search != null && !search.isEmpty()) {
+            vehicles = vehicles.stream()
+                    .filter(v -> v.getModel().toLowerCase().contains(search.toLowerCase()) ||
+                               v.getRegNo().toLowerCase().contains(search.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        if (fuelType != null && !fuelType.isEmpty()) {
+            vehicles = vehicles.stream()
+                    .filter(v -> v.getFuelType().equalsIgnoreCase(fuelType))
+                    .collect(Collectors.toList());
+        }
+
+        if (availability != null && !availability.isEmpty()) {
+            boolean isAvailable = availability.equals("available");
+            vehicles = vehicles.stream()
+                    .filter(v -> v.getAvailability() == isAvailable)
+                    .collect(Collectors.toList());
+        }
+
+        // Apply sorting
+        switch (sortBy) {
+            case "price-low":
+                vehicles.sort((v1, v2) -> Double.compare(v1.getRentalPrice(), v2.getRentalPrice()));
+                break;
+            case "price-high":
+                vehicles.sort((v1, v2) -> Double.compare(v2.getRentalPrice(), v1.getRentalPrice()));
+                break;
+            case "model":
+            default:
+                vehicles.sort((v1, v2) -> v1.getModel().compareTo(v2.getModel()));
+                break;
+        }
+
+        model.addAttribute("vehicles", vehicles);
+        model.addAttribute("search", search);
+        model.addAttribute("fuelType", fuelType);
+        model.addAttribute("availability", availability);
+        model.addAttribute("sortBy", sortBy);
+
+        return "customer_vehicles";  // Load vehicle browse page directly on home
+    }
+
+    @GetMapping("/customer-dashboard")
+    public String customerDashboard(Model model, @AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+        User user = userService.findUserByEmail(currentUser.getUsername());
+        model.addAttribute("user", user);
+        model.addAttribute("userName", user.getName());
+        return "customer_dashboard";
+    }
+
+    @GetMapping("/customer/vehicles")
+    public String browseVehicles(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String fuelType,
+            @RequestParam(required = false) String availability,
+            @RequestParam(required = false, defaultValue = "model") String sortBy,
+            Model model,
+            @AuthenticationPrincipal UserDetails currentUser) {
+        
+        // Allow browsing without login
+        if (currentUser != null) {
+            User user = userService.findUserByEmail(currentUser.getUsername());
+            model.addAttribute("userName", user.getName());
+            model.addAttribute("isLoggedIn", true);
+        } else {
+            model.addAttribute("userName", "Guest");
+            model.addAttribute("isLoggedIn", false);
+        }
+
+        // Get all vehicles
+        List<Vehicle> vehicles = vehicleService.getAllVehicles();
+
+        // Apply search filter
+        if (search != null && !search.trim().isEmpty()) {
+            String searchLower = search.toLowerCase();
+            vehicles = vehicles.stream()
+                    .filter(v -> v.getModel().toLowerCase().contains(searchLower) 
+                            || v.getFuelType().toLowerCase().contains(searchLower)
+                            || v.getRegNo().toLowerCase().contains(searchLower))
+                    .collect(Collectors.toList());
+        }
+
+        // Apply fuel type filter
+        if (fuelType != null && !fuelType.isEmpty() && !fuelType.equals("ALL")) {
+            vehicles = vehicles.stream()
+                    .filter(v -> v.getFuelType().equalsIgnoreCase(fuelType))
+                    .collect(Collectors.toList());
+        }
+
+        // Apply availability filter
+        if (availability != null && !availability.isEmpty() && !availability.equals("ALL")) {
+            boolean isAvailable = availability.equals("AVAILABLE");
+            vehicles = vehicles.stream()
+                    .filter(v -> v.getAvailability() == isAvailable)
+                    .collect(Collectors.toList());
+        }
+
+        // Apply sorting
+        if ("price".equals(sortBy)) {
+            vehicles = vehicles.stream()
+                    .sorted((v1, v2) -> Double.compare(v1.getRentalPrice(), v2.getRentalPrice()))
+                    .collect(Collectors.toList());
+        } else {
+            vehicles = vehicles.stream()
+                    .sorted((v1, v2) -> v1.getModel().compareToIgnoreCase(v2.getModel()))
+                    .collect(Collectors.toList());
+        }
+
+        model.addAttribute("vehicles", vehicles);
+        model.addAttribute("search", search);
+        model.addAttribute("fuelType", fuelType);
+        model.addAttribute("availability", availability);
+        model.addAttribute("sortBy", sortBy);
+
+        return "customer_vehicles";
+    }
+
+    @GetMapping("/customer/book/{regNo}")
+    public String showBookingForm(@PathVariable String regNo, Model model, @AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        User user = userService.findUserByEmail(currentUser.getUsername());
+        Vehicle vehicle = vehicleService.getVehicleByRegNo(regNo)
+                .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
+
+        if (!vehicle.getAvailability()) {
+            model.addAttribute("errorMessage", "This vehicle is not available for booking");
+            return "redirect:/customer/vehicles";
+        }
+
+        model.addAttribute("user", user);
+        model.addAttribute("userName", user.getName());
+        model.addAttribute("vehicle", vehicle);
+        model.addAttribute("currentDate", LocalDate.now().toString());
+
+        return "customer_booking";
+    }
+
+    @PostMapping("/customer/book")
+    public String processBooking(
+            @RequestParam String carId,
+            @RequestParam String bookingDate,
+            @RequestParam String bookedEmail,
+            @RequestParam String contactNumber,
+            @RequestParam String contactPersonName,
+            @RequestParam(required = false) String additionalNotes,
+            @AuthenticationPrincipal UserDetails currentUser,
+            RedirectAttributes redirectAttributes) {
+        
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            // Parse booking date
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date parsedDate = dateFormat.parse(bookingDate);
+
+            // Verify vehicle exists
+            vehicleService.getVehicleByRegNo(carId)
+                    .orElseThrow(() -> new IllegalArgumentException("Vehicle not found"));
+
+            // Create booking using DTO
+            Long vehicleIdAsLong = (long) carId.hashCode(); // Temporary solution for ID conversion
+            
+            CarBookingDTOS.CreateRequest bookingRequest = new CarBookingDTOS.CreateRequest();
+            bookingRequest.setCarId(vehicleIdAsLong);
+            bookingRequest.setBookingDate(parsedDate);
+            bookingRequest.setBookedEmail(bookedEmail);
+            bookingRequest.setContactNumber(contactNumber);
+            bookingRequest.setContactPersonName(contactPersonName);
+            bookingRequest.setAdditionalNotes(additionalNotes);
+
+            bookingService.createBooking(bookingRequest);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Booking created successfully!");
+            return "redirect:/customer/bookings";
+        } catch (ParseException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid date format");
+            return "redirect:/customer/book/" + carId;
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to create booking: " + e.getMessage());
+            return "redirect:/customer/book/" + carId;
+        }
+    }
+
+    @GetMapping("/customer/profile")
+    public String showProfile(Model model, @AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        User user = userService.findUserByEmail(currentUser.getUsername());
+        model.addAttribute("user", user);
+
+        // Calculate booking stats
+        CarBookingDTOS.ListResponse allBookings = bookingService.getAllBookings(0, 1000); // Get first 1000 bookings
+        List<CarBookingDTOS.Response> userBookings = allBookings.getBookings().stream()
+                .filter(b -> b.getBookedEmail().equals(user.getEmail()))
+                .collect(Collectors.toList());
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalBookings", userBookings.size());
+        stats.put("activeBookings", userBookings.stream()
+                .filter(b -> "PENDING".equals(b.getStatus()) || "CONFIRMED".equals(b.getStatus()))
+                .count());
+        stats.put("totalSpent", 0); // Calculate based on vehicle rental prices if needed
+
+        model.addAttribute("bookingStats", stats);
+
+        return "customer_profile";
+    }
+
+    @PostMapping("/customer/profile/update")
+    public String updateProfile(
+            @RequestParam String name,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String address,
+            @AuthenticationPrincipal UserDetails currentUser,
+            RedirectAttributes redirectAttributes) {
+        
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            User user = userService.findUserByEmail(currentUser.getUsername());
+            
+            // Split name into first and last name
+            String[] nameParts = name.trim().split("\\s+", 2);
+            String firstName = nameParts.length > 0 ? nameParts[0] : name;
+            String lastName = nameParts.length > 1 ? nameParts[1] : "";
+            
+            // Create UserDto with updated information
+            UserDto userDto = new UserDto();
+            userDto.setFirstName(firstName);
+            userDto.setLastName(lastName);
+            userDto.setEmail(user.getEmail());
+            userDto.setPassword(user.getPassword()); // Keep existing password
+            
+            userService.updateUser(user.getId(), userDto);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to update profile: " + e.getMessage());
+        }
+
+        return "redirect:/customer/profile";
+    }
+
+    @PostMapping("/customer/profile/change-password")
+    public String changePassword(
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            @AuthenticationPrincipal UserDetails currentUser,
+            RedirectAttributes redirectAttributes) {
+        
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            User user = userService.findUserByEmail(currentUser.getUsername());
+
+            // Verify current password
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Current password is incorrect");
+                return "redirect:/customer/profile";
+            }
+
+            // Verify new passwords match
+            if (!newPassword.equals(confirmPassword)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "New passwords do not match");
+                return "redirect:/customer/profile";
+            }
+
+            // Split name into first and last name
+            String[] nameParts = user.getName().trim().split("\\s+", 2);
+            String firstName = nameParts.length > 0 ? nameParts[0] : user.getName();
+            String lastName = nameParts.length > 1 ? nameParts[1] : "";
+            
+            // Create UserDto with new password
+            UserDto userDto = new UserDto();
+            userDto.setFirstName(firstName);
+            userDto.setLastName(lastName);
+            userDto.setEmail(user.getEmail());
+            userDto.setPassword(newPassword); // Service will encode it
+
+            userService.updateUser(user.getId(), userDto);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Password changed successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to change password: " + e.getMessage());
+        }
+
+        return "redirect:/customer/profile";
+    }
+
+    @GetMapping("/customer/bookings")
+    public String showMyBookings(Model model, @AuthenticationPrincipal UserDetails currentUser) {
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        User user = userService.findUserByEmail(currentUser.getUsername());
+        CarBookingDTOS.ListResponse allBookings = bookingService.getAllBookings(0, 1000);
+        List<CarBookingDTOS.Response> userBookings = allBookings.getBookings().stream()
+                .filter(b -> b.getBookedEmail().equals(user.getEmail()))
+                .collect(Collectors.toList());
+
+        model.addAttribute("user", user);
+        model.addAttribute("userName", user.getName());
+        model.addAttribute("bookings", userBookings);
+
+        return "customer_bookings";
+    }
+}

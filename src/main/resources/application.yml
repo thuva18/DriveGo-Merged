@@ -1,0 +1,62 @@
+server:
+  port: 8080
+  tomcat:
+    max-http-form-post-size: 50MB
+    max-swallow-size: 50MB
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/DriveGo2?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 6393
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        '[enable_lazy_load_no_trans]': false
+        jdbc:
+          '[batch_size]': 20
+        '[order_inserts]': true
+        '[order_updates]': true
+    open-in-view: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+      file-size-threshold: 2KB
+  web:
+    resources:
+      cache:
+        period: 0
+      static-locations: classpath:/static/
+  h2:
+    console:
+      enabled: false
+  thymeleaf:
+    enabled: false
+    cache: false
+  flyway:
+    enabled: false
+  security:
+    user:
+      name: admin
+      password: admin
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+logging:
+  level:
+    org.hibernate.SQL: debug
+    org.hibernate.type.descriptor.sql.BasicBinder: trace

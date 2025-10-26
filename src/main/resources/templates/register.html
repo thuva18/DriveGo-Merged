@@ -1,0 +1,381 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveGo - Create Account</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/auth-theme.css}" href="/css/auth-theme.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+<div class="auth-bubbles">
+    <span class="auth-bubble"></span>
+    <span class="auth-bubble secondary"></span>
+    <span class="auth-bubble tertiary"></span>
+</div>
+<nav class="navbar navbar-expand-lg navbar-dark auth-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/index}">
+            <i class="fa-solid fa-car-side"></i>
+            DriveGo
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/login}"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" th:href="@{/register}"><i class="fa-solid fa-user-plus"></i> Register</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="auth-wrapper">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div th:if="${param.success}" class="mb-3">
+                <div class="alert auth-alert success"><i class="fa-solid fa-circle-check me-2"></i>You have successfully registered!</div>
+            </div>
+            <div th:if="${success}" class="mb-3">
+                <div class="alert auth-alert success"><i class="fa-solid fa-circle-check me-2"></i><span th:text="${success}">Account created successfully!</span></div>
+            </div>
+            <div th:if="${error}" class="mb-3">
+                <div class="alert auth-alert error"><i class="fa-solid fa-circle-exclamation me-2"></i><span th:text="${error}">An error occurred.</span></div>
+            </div>
+            <div th:if="${validationErrors}" class="mb-3">
+                <div class="alert auth-alert error"><i class="fa-solid fa-circle-exclamation me-2"></i><span th:text="${validationErrors}">Please fix the errors below.</span></div>
+            </div>
+            <div class="auth-card fade-in">
+                <div class="auth-card-header">
+                    <div class="auth-icon-wrapper">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </div>
+                    <div>
+                        <div class="auth-card-title">Create Your Account</div>
+                        <div class="auth-card-subtitle">Join DriveGo and start your journey</div>
+                    </div>
+                </div>
+                <div class="auth-card-body">
+                    <form method="post" role="form" th:action="@{/register/save}" th:object="${user}" class="auth-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                <div class="form-group mb-4 auth-input-group">
+                    <label class="form-label" for="firstName">First Name</label>
+                    <span class="auth-input-icon"><i class="fa-solid fa-user"></i></span>
+                    <input class="form-control auth-input" id="firstName" name="firstName" placeholder="Enter your first name" th:field="*{firstName}" type="text" autocomplete="given-name" required minlength="2" maxlength="50" pattern="[a-zA-Z\s]+" oninput="validateField(this)"/>
+                    <div class="validation-feedback" id="firstName-feedback"></div>
+                    <p class="text-danger mt-2 mb-0" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></p>
+                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-4 auth-input-group">
+                                    <label class="form-label" for="lastName">Last Name</label>
+                                    <span class="auth-input-icon"><i class="fa-solid fa-user"></i></span>
+                                    <input class="form-control auth-input" id="lastName" name="lastName" placeholder="Enter your last name" th:field="*{lastName}" type="text" autocomplete="family-name" required minlength="2" maxlength="50" pattern="[a-zA-Z\s]+" oninput="validateField(this)"/>
+                                    <div class="validation-feedback" id="lastName-feedback"></div>
+                                    <p class="text-danger mt-2 mb-0" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-4 auth-input-group">
+                            <label class="form-label" for="email">Email Address</label>
+                            <span class="auth-input-icon"><i class="fa-solid fa-envelope"></i></span>
+                            <input class="form-control auth-input" id="email" name="email" placeholder="Enter your email address" th:field="*{email}" type="email" autocomplete="email" required oninput="validateEmail(this)"/>
+                            <div class="validation-feedback" id="email-feedback"></div>
+                            <p class="text-danger mt-2 mb-0" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+                        </div>
+                        <div class="form-group mb-4 auth-input-group">
+                            <label class="form-label" for="password">Password</label>
+                            <span class="auth-input-icon"><i class="fa-solid fa-lock"></i></span>
+                            <input class="form-control auth-input" id="password" name="password" placeholder="Create a strong password" th:field="*{password}" type="password" autocomplete="new-password" required minlength="8" oninput="validatePassword(this)"/>
+                            <div class="password-toggle" onclick="togglePassword()">
+                                <i class="fa-solid fa-eye" id="passwordToggleIcon"></i>
+                            </div>
+                            <div class="password-strength" id="password-strength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="strength-fill"></div>
+                                </div>
+                                <div class="strength-text" id="strength-text">Password strength</div>
+                            </div>
+                            <div class="validation-feedback" id="password-feedback"></div>
+                            <p class="text-danger mt-2 mb-0" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></p>
+                        </div>
+                        <div class="form-group mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="termsAgreement" required>
+                                <label class="form-check-label" for="termsAgreement">
+                                    I agree to the <a href="#" class="auth-link">Terms of Service</a> and <a href="#" class="auth-link">Privacy Policy</a>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-3">
+                            <button class="btn auth-submit" type="submit" id="submitBtn" onclick="submitForm(event)">
+                                <i class="fa-solid fa-rocket me-2"></i><span class="btn-text">Create Account</span>
+                                <div class="btn-loading" style="display: none;">
+                                    <i class="fa-solid fa-spinner fa-spin me-2"></i>Creating Account...
+                                </div>
+                            </button>
+                            <div class="auth-divider">
+                                <span>or</span>
+                            </div>
+                            <div class="auth-footer-text text-center">
+                                Already have an account?
+                                <a class="auth-link" th:href="@{/login}">
+                                    <i class="fa-solid fa-arrow-right-to-bracket me-1"></i>Sign in here
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Password toggle functionality
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('passwordToggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
+// Real-time field validation
+function validateField(field) {
+    const value = field.value.trim();
+    const fieldName = field.name;
+    const feedback = document.getElementById(fieldName + '-feedback');
+    
+    // Remove existing validation classes
+    field.classList.remove('is-valid', 'is-invalid');
+    
+    if (value.length === 0) {
+        showValidation(field, feedback, 'This field is required', false);
+        return false;
+    }
+    
+    if (fieldName === 'firstName' || fieldName === 'lastName') {
+        if (value.length < 2) {
+            showValidation(field, feedback, 'Name must be at least 2 characters', false);
+            return false;
+        }
+        if (!/^[a-zA-Z\s]+$/.test(value)) {
+            showValidation(field, feedback, 'Name can only contain letters and spaces', false);
+            return false;
+        }
+    }
+    
+    showValidation(field, feedback, 'Looks good!', true);
+    return true;
+}
+
+// Email validation
+function validateEmail(field) {
+    const value = field.value.trim();
+    const feedback = document.getElementById('email-feedback');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    field.classList.remove('is-valid', 'is-invalid');
+    
+    if (value.length === 0) {
+        showValidation(field, feedback, 'Email is required', false);
+        return false;
+    }
+    
+    if (!emailRegex.test(value)) {
+        showValidation(field, feedback, 'Please enter a valid email address', false);
+        return false;
+    }
+    
+    showValidation(field, feedback, 'Email looks good!', true);
+    return true;
+}
+
+// Password validation with strength indicator
+function validatePassword(field) {
+    const value = field.value;
+    const feedback = document.getElementById('password-feedback');
+    const strengthFill = document.getElementById('strength-fill');
+    const strengthText = document.getElementById('strength-text');
+    
+    field.classList.remove('is-valid', 'is-invalid');
+    
+    if (value.length === 0) {
+        showValidation(field, feedback, 'Password is required', false);
+        updatePasswordStrength(0, 'Enter a password');
+        return false;
+    }
+    
+    if (value.length < 8) {
+        showValidation(field, feedback, 'Password must be at least 8 characters', false);
+        updatePasswordStrength(1, 'Too short');
+        return false;
+    }
+    
+    // Calculate password strength
+    let strength = 0;
+    let strengthLabel = '';
+    
+    if (value.length >= 8) strength++;
+    if (/[a-z]/.test(value)) strength++;
+    if (/[A-Z]/.test(value)) strength++;
+    if (/[0-9]/.test(value)) strength++;
+    if (/[^A-Za-z0-9]/.test(value)) strength++;
+    
+    switch (strength) {
+        case 0:
+        case 1:
+            strengthLabel = 'Very Weak';
+            showValidation(field, feedback, 'Password is too weak', false);
+            break;
+        case 2:
+            strengthLabel = 'Weak';
+            showValidation(field, feedback, 'Password is weak', false);
+            break;
+        case 3:
+            strengthLabel = 'Fair';
+            showValidation(field, feedback, 'Password is fair', false);
+            break;
+        case 4:
+            strengthLabel = 'Good';
+            showValidation(field, feedback, 'Password is good!', true);
+            break;
+        case 5:
+            strengthLabel = 'Strong';
+            showValidation(field, feedback, 'Password is strong!', true);
+            break;
+    }
+    
+    updatePasswordStrength(strength, strengthLabel);
+    return strength >= 3;
+}
+
+// Update password strength indicator
+function updatePasswordStrength(strength, label) {
+    const strengthFill = document.getElementById('strength-fill');
+    const strengthText = document.getElementById('strength-text');
+    
+    const percentage = (strength / 5) * 100;
+    strengthFill.style.width = percentage + '%';
+    
+    strengthText.textContent = label;
+    strengthFill.className = 'strength-fill';
+    
+    if (strength <= 2) {
+        strengthFill.classList.add('weak');
+    } else if (strength <= 3) {
+        strengthFill.classList.add('fair');
+    } else if (strength <= 4) {
+        strengthFill.classList.add('good');
+    } else {
+        strengthFill.classList.add('strong');
+    }
+}
+
+// Show validation feedback
+function showValidation(field, feedback, message, isValid) {
+    field.classList.add(isValid ? 'is-valid' : 'is-invalid');
+    feedback.textContent = message;
+    feedback.className = 'validation-feedback ' + (isValid ? 'valid' : 'invalid');
+}
+
+// Form submission with validation
+function submitForm(event) {
+    event.preventDefault();
+    
+    const form = event.target.closest('form');
+    const firstName = document.getElementById('firstName');
+    const lastName = document.getElementById('lastName');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const terms = document.getElementById('termsAgreement');
+    
+    // Validate all fields
+    const isFirstNameValid = validateField(firstName);
+    const isLastNameValid = validateField(lastName);
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    const isTermsValid = terms.checked;
+    
+    if (!isTermsValid) {
+        showToast('Please accept the Terms of Service and Privacy Policy', 'error');
+        return;
+    }
+    
+    if (isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid && isTermsValid) {
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoading = submitBtn.querySelector('.btn-loading');
+        
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
+        submitBtn.disabled = true;
+        
+        // Submit form
+        form.submit();
+    } else {
+        showToast('Please fix the errors above before submitting', 'error');
+    }
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast-notification ${type}`;
+    toast.innerHTML = `
+        <div class="toast-content">
+            <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <i class="fa-solid fa-times"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+// Initialize form validation on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add real-time validation to all form fields
+    const formFields = document.querySelectorAll('input[required]');
+    formFields.forEach(field => {
+        field.addEventListener('blur', function() {
+            if (this.name === 'email') {
+                validateEmail(this);
+            } else if (this.name === 'password') {
+                validatePassword(this);
+            } else {
+                validateField(this);
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

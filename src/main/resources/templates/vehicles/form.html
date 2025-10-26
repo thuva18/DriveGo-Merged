@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Vehicle Form</title>
+    <link rel="stylesheet" th:href="@{static/css/style.css}"/>
+</head>
+<body>
+<div style="background-color: #1a252f; color: #ffffff; padding: 10px;">
+    <h1 th:if="${vehicle.regNo == null}" style="margin: 0;">Add Vehicle</h1>
+    <h1 th:if="${vehicle.regNo != null}" style="margin: 0;">Edit Vehicle</h1>
+</div>
+<div style="padding: 20px; background-color: #f5f7fa;">
+    <form th:action="@{/vehicles/save}" th:object="${vehicle}" method="post" style="display: flex; flex-direction: column; gap: 10px;">
+        <label style="font-weight: bold; color: #2c3e50;">Registration Number:</label>
+        <input type="text" th:field="*{regNo}" th:readonly="${vehicle.regNo != null}" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;"/>
+        <span th:errors="*{regNo}" style="color: #e74c3c;"></span><br/>
+        <label style="font-weight: bold; color: #2c3e50;">Model:</label>
+        <input type="text" th:field="*{model}" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;"/>
+        <span th:errors="*{model}" style="color: #e74c3c;"></span><br/>
+        <label style="font-weight: bold; color: #2c3e50;">Mileage:</label>
+        <input type="number" th:field="*{mileage}" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;"/>
+        <span th:errors="*{mileage}" style="color: #e74c3c;"></span><br/>
+        <label style="font-weight: bold; color: #2c3e50;">Rental Price:</label>
+        <input type="number" step="0.01" th:field="*{rentalPrice}" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;"/>
+        <span th:errors="*{rentalPrice}" style="color: #e74c3c;"></span><br/>
+        <label style="font-weight: bold; color: #2c3e50;">Fuel Type:</label>
+        <input type="text" th:field="*{fuelType}" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;"/>
+        <span th:errors="*{fuelType}" style="color: #e74c3c;"></span><br/>
+        <label style="font-weight: bold; color: #2c3e50;">Maintenance History:</label>
+        <textarea th:field="*{maintenanceHistory}" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px; min-height: 100px;"></textarea><br/>
+        <label style="font-weight: bold; color: #2c3e50;">Availability:</label>
+        <input type="checkbox" th:field="*{availability}" style="margin-right: 10px;"/><br/>
+        <button type="submit" style="background-color: #2ecc71; color: #ffffff; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Save</button>
+    </form>
+    <div th:if="${error}" th:text="${error}" style="color: #e74c3c; margin-top: 10px;"></div>
+    <a th:href="@{/vehicles}" style="display: inline-block; margin-top: 10px; color: #2c3e50; text-decoration: none;">Back to List</a>
+</div>
+</body>
+</html>

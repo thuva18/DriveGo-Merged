@@ -1,0 +1,395 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - DriveGo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/auth-theme.css}" href="/css/auth-theme.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="drivego-body">
+<div class="drivego-bubbles">
+    <span class="drivego-bubble"></span>
+    <span class="drivego-bubble secondary"></span>
+    <span class="drivego-bubble tertiary"></span>
+</div>
+<nav class="navbar navbar-expand-lg navbar-dark drivego-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/index}">
+            <i class="fa-solid fa-car-side"></i>
+            DriveGo
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#profileNav" aria-controls="profileNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="profileNav">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" th:href="@{/profile}"><i class="fa-solid fa-user"></i> Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/profile/edit}"><i class="fa-solid fa-pen"></i> Edit Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/logout}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="page-wrapper fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Profile Header Card (polished) -->
+            <div class="profile-header-card mb-4">
+                <div class="profile-header-inner d-flex align-items-center gap-4">
+                    <div class="profile-avatar-col">
+                        <div class="profile-avatar-ring">
+                            <!-- Use a static placeholder to avoid property lookup errors when user.avatarUrl is not provided -->
+                            <img th:src="'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&q=80'" alt="avatar" class="profile-avatar"/>
+                        </div>
+                    </div>
+                    <div class="profile-meta flex-grow-1">
+                        <h2 class="profile-name" th:text="${user.name}">User Name</h2>
+                        <div class="d-flex align-items-center gap-3">
+                            <p class="profile-email mb-0" th:text="${user.email}">email@example.com</p>
+                            <div class="profile-roles">
+                                <span th:each="r : ${user.roles}" th:text="${r.name}" class="role-badge-inline"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-actions-col">
+                        <a class="btn drivego-btn-primary" th:href="@{/profile/edit}">
+                            <i class="fa-solid fa-pen me-2"></i>Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div th:if="${success}" class="mb-4">
+                <div class="alert auth-alert success">
+                    <i class="fa-solid fa-circle-check me-2"></i>
+                    <span th:text="${success}">Profile updated successfully.</span>
+                </div>
+            </div>
+            <div th:if="${accountDeleteError}" class="mb-4">
+                <div class="alert auth-alert error">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    <span th:text="${accountDeleteError}">Unable to delete account.</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Overview -->
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="glass-card">
+                        <div class="glass-card-header mb-3">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <div class="glass-card-title">Dashboard Overview</div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-car"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">12</div>
+                                        <div class="stat-label">Total Rentals</div>
+                                        <div class="stat-change positive">+2 this month</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-star"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">4.8</div>
+                                        <div class="stat-label">Rating</div>
+                                        <div class="stat-change positive">+0.2 this month</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-calendar"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">30</div>
+                                        <div class="stat-label">Days Active</div>
+                                        <div class="stat-change neutral">Current streak</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fa-solid fa-trophy"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">Gold</div>
+                                        <div class="stat-label">Member Level</div>
+                                        <div class="stat-change positive">Premium benefits</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Quick Stats -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-8">
+                    <div class="glass-card">
+                        <div class="glass-card-header mb-3">
+                            <i class="fa-solid fa-clock"></i>
+                            <div class="glass-card-title">Recent Activity</div>
+                        </div>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fa-solid fa-car"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">New rental booked</div>
+                                    <div class="activity-desc">BMW X5 - 3 days rental</div>
+                                    <div class="activity-time">2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fa-solid fa-star"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Rating submitted</div>
+                                    <div class="activity-desc">5 stars for Mercedes E-Class</div>
+                                    <div class="activity-time">1 day ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Profile updated</div>
+                                    <div class="activity-desc">Contact information changed</div>
+                                    <div class="activity-time">3 days ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card">
+                        <div class="glass-card-header mb-3">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <div class="glass-card-title">Quick Stats</div>
+                        </div>
+                        <div class="quick-stats">
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">This Month</div>
+                                <div class="quick-stat-value">3 rentals</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">Total Spent</div>
+                                <div class="quick-stat-value">$2,450</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">Favorite Car</div>
+                                <div class="quick-stat-value">BMW X5</div>
+                            </div>
+                            <div class="quick-stat-item">
+                                <div class="quick-stat-label">Next Rental</div>
+                                <div class="quick-stat-value">Dec 15, 2024</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-card mb-4">
+                <div class="glass-card-header mb-3">
+                    <i class="fa-solid fa-bolt"></i>
+                    <div class="glass-card-title">Quick Actions</div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a class="action-card" th:href="@{/profile/edit}">
+                            <div class="action-icon">
+                                <i class="fa-solid fa-pen"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>Edit Profile</h6>
+                                <p>Update your personal information</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a class="action-card" th:href="@{/users}">
+                            <div class="action-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>Manage Users</h6>
+                                <p>View and manage all users</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a class="action-card" href="#">
+                            <div class="action-icon">
+                                <i class="fa-solid fa-car"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>Book Rental</h6>
+                                <p>Find and book your next car</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="action-card danger" onclick="confirmDelete()">
+                            <div class="action-icon">
+                                <i class="fa-solid fa-user-minus"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6>Delete Account</h6>
+                                <p>Permanently delete your account</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Rentals & Notifications -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="glass-card">
+                        <div class="glass-card-header mb-3">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            <div class="glass-card-title">Upcoming Rentals</div>
+                        </div>
+                        <div class="rental-list">
+                            <div class="rental-item">
+                                <div class="rental-car">
+                                    <i class="fa-solid fa-car"></i>
+                                    <div class="rental-details">
+                                        <div class="rental-model">BMW X5</div>
+                                        <div class="rental-dates">Dec 15-18, 2024</div>
+                                    </div>
+                                </div>
+                                <div class="rental-status confirmed">Confirmed</div>
+                            </div>
+                            <div class="rental-item">
+                                <div class="rental-car">
+                                    <i class="fa-solid fa-car"></i>
+                                    <div class="rental-details">
+                                        <div class="rental-model">Mercedes E-Class</div>
+                                        <div class="rental-dates">Dec 22-25, 2024</div>
+                                    </div>
+                                </div>
+                                <div class="rental-status pending">Pending</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="glass-card">
+                        <div class="glass-card-header mb-3">
+                            <i class="fa-solid fa-bell"></i>
+                            <div class="glass-card-title">Notifications</div>
+                        </div>
+                        <div class="notification-list">
+                            <div class="notification-item">
+                                <div class="notification-icon">
+                                    <i class="fa-solid fa-info-circle"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Rental Reminder</div>
+                                    <div class="notification-desc">Your BMW X5 rental starts tomorrow</div>
+                                    <div class="notification-time">1 hour ago</div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="notification-icon">
+                                    <i class="fa-solid fa-gift"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Special Offer</div>
+                                    <div class="notification-desc">20% off luxury cars this weekend</div>
+                                    <div class="notification-time">3 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <div class="notification-icon">
+                                    <i class="fa-solid fa-star"></i>
+                                </div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Rating Request</div>
+                                    <div class="notification-desc">Rate your recent Mercedes rental</div>
+                                    <div class="notification-time">1 day ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Details -->
+            <div class="glass-card">
+                <div class="glass-card-header mb-3">
+                    <i class="fa-solid fa-id-card"></i>
+                    <div class="glass-card-title">Account Information</div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label>Full Name</label>
+                            <p th:text="${user.name}">User Name</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label>Email Address</label>
+                            <p th:text="${user.email}">email@example.com</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label>Account Type</label>
+                            <p th:each="r : ${user.roles}" th:text="${r.name}" class="role-badge-inline"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <label>Member Since</label>
+                            <p>October 2024</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Delete Form -->
+<form th:action="@{/profile/delete}" method="post" id="deleteForm" style="display: none;"></form>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function confirmDelete() {
+    if (confirm('Are you sure you want to permanently delete your DriveGo account? This action cannot be undone.')) {
+        document.getElementById('deleteForm').submit();
+    }
+}
+</script>
+</body>
+</html>

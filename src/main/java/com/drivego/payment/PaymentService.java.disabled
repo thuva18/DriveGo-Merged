@@ -1,0 +1,169 @@
+package com.drivego.payment;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+public class PaymentService {
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    // Create a new payment
+    @Transactional
+    public PaymentDTOS.Response createPayment(PaymentDTOS.CreateRequest request) {
+        PaymentModel payment = new PaymentModel();
+        payment.setBookingId(request.getBookingId());
+        payment.setMethodId(request.getMethodId());
+        payment.setAmount(request.getAmount());
+        payment.setPaymentStatus(PaymentModel.PaymentStatus.Pending);
+        payment.setPaymentDate(new Date());
+
+        PaymentModel savedPayment = paymentRepository.save(payment);
+        return convertToResponse(savedPayment);
+    }
+
+    // Get payment by ID
+    public PaymentDTOS.Response getPaymentById(Integer id) {
+        Optional<PaymentModel> payment = paymentRepository.findById(id);
+        return payment.map(this::convertToResponse).orElse(null);
+    }
+
+    // Get all payments by booking ID
+    public List<PaymentDTOS.Response> getPaymentsByBookingId(Integer bookingId) {
+        List<PaymentModel> payments = paymentRepository.findByBookingIdOrderByPaymentDateDesc(bookingId);
+        return payments.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Update payment status
+    @Transactional
+    public PaymentDTOS.Response updatePaymentStatus(Integer id, String status) {
+        Optional<PaymentModel> optionalPayment = paymentRepository.findById(id);
+        if (optionalPayment.isPresent()) {
+            PaymentModel payment = optionalPayment.get();
+            payment.setPaymentStatus(PaymentModel.PaymentStatus.valueOf(status));
+            PaymentModel updatedPayment = paymentRepository.save(payment);
+            return convertToResponse(updatedPayment);
+        }
+        return null;
+    }
+
+    // Delete payment
+    @Transactional
+    public boolean deletePayment(Integer id) {
+        if (paymentRepository.existsById(id)) {
+            paymentRepository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    // Get all payments with pagination
+    public PaymentDTOS.ListResponse getAllPayments(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PaymentModel> paymentPage = paymentRepository.findAll(pageable);
+        
+        List<PaymentDTOS.Response> payments = paymentPage.getContent().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        return new PaymentDTOS.ListResponse(
+                payments,
+                (int) paymentPage.getTotalElements(),
+                paymentPage.getNumber(),
+                paymentPage.getSize()
+        );
+    }
+
+    // Search payments
+    public PaymentDTOS.ListResponse searchPayments(PaymentDTOS.SearchRequest searchRequest) {
+        Pageable pageable = PageRequest.of(searchRequest.getPage(), searchRequest.getSize());
+        
+        PaymentModel.PaymentStatus statusEnum = null;
+        if (searchRequest.getStatus() != null) {
+            try {
+                statusEnum = PaymentModel.PaymentStatus.valueOf(searchRequest.getStatus());
+            } catch (IllegalArgumentException e) {
+                statusEnum = null;
+            }
+        }
+        
+        Page<PaymentModel> paymentPage = paymentRepository.searchPayments(
+                searchRequest.getBookingId(),
+                statusEnum,
+                searchRequest.getMethodId(),
+                pageable
+        );
+
+        List<PaymentDTOS.Response> payments = paymentPage.getContent().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        return new PaymentDTOS.ListResponse(
+                payments,
+                (int) paymentPage.getTotalElements(),
+                paymentPage.getNumber(),
+                paymentPage.getSize()
+        );
+    }
+
+    // Get payment statistics
+    public PaymentDTOS.StatsResponse getPaymentStats() {
+        PaymentDTOS.StatsResponse stats = new PaymentDTOS.StatsResponse();
+        
+        stats.setTotalPayments(paymentRepository.count());
+        stats.setTotalRevenue(paymentRepository.getTotalRevenue());
+        stats.setPendingPayments(paymentRepository.countByPaymentStatus(PaymentModel.PaymentStatus.Pending));
+        stats.setCompletedPayments(paymentRepository.countByPaymentStatus(PaymentModel.PaymentStatus.Completed));
+        stats.setFailedPayments(paymentRepository.countByPaymentStatus(PaymentModel.PaymentStatus.Failed));
+
+        return stats;
+    }
+
+    // Get revenue by date range
+    public BigDecimal getRevenueByDateRange(Date startDate, Date endDate) {
+        return paymentRepository.getRevenueByDateRange(startDate, endDate);
+    }
+
+    // Get payments by status
+    public List<PaymentDTOS.Response> getPaymentsByStatus(String status) {
+        PaymentModel.PaymentStatus statusEnum = PaymentModel.PaymentStatus.valueOf(status);
+        List<PaymentModel> payments = paymentRepository.findByPaymentStatusOrderByPaymentDateDesc(statusEnum);
+        return payments.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Get recent payments
+    public List<PaymentDTOS.Response> getRecentPayments(int limit) {
+        Pageable pageable = PageRequest.of(0, limit);
+        List<PaymentModel> payments = paymentRepository.findRecentPayments(pageable);
+        return payments.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // Helper method to convert PaymentModel to Response DTO
+    private PaymentDTOS.Response convertToResponse(PaymentModel payment) {
+        PaymentDTOS.Response response = new PaymentDTOS.Response();
+        response.setId(payment.getPaymentId());
+        response.setBookingId(payment.getBookingId());
+        response.setMethodId(payment.getMethodId());
+        response.setAmount(payment.getAmount());
+        response.setPaymentStatus(payment.getPaymentStatus().name());
+        response.setPaymentDate(payment.getPaymentDate());
+        return response;
+    }
+}

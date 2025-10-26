@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveGo - Premium Car Rental Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/auth-theme.css}" href="/css/auth-theme.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="drivego-body">
+<div class="drivego-bubbles">
+    <span class="drivego-bubble"></span>
+    <span class="drivego-bubble secondary"></span>
+    <span class="drivego-bubble tertiary"></span>
+</div>
+<nav class="navbar navbar-expand-lg navbar-dark drivego-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/index}">
+            <i class="fa-solid fa-car-side"></i>
+            DriveGo
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/login}"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/register}"><i class="fa-solid fa-user-plus"></i> Register</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<section class="hero-shell fade-in">
+    <div class="hero-copy">
+        <div class="mb-3" th:if="${accountDeleted}">
+            <div class="alert auth-alert success"><i class="fa-solid fa-circle-check me-2"></i><span th:text="${accountDeleted}">Your account has been deleted.</span></div>
+        </div>
+        <div class="hero-badge">
+            <i class="fa-solid fa-star me-2"></i>
+            <span>Premium Car Rental Platform</span>
+        </div>
+        <h1 class="hero-title">
+            <span class="gradient-text">DriveGo</span>
+            <br>Your Journey Starts Here
+        </h1>
+        <p class="hero-subtitle">
+            Experience the future of car rental with our premium fleet, instant booking, and intelligent dashboard. 
+            From luxury sedans to eco-friendly electric vehicles, we've got your perfect ride.
+        </p>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Premium Vehicles</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Support</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Cities</div>
+            </div>
+        </div>
+        <div class="hero-actions">
+            <a class="btn drivego-btn-primary" th:href="@{/register}">
+                <i class="fa-solid fa-rocket me-2"></i>Start Your Journey
+            </a>
+            <a class="hero-cta-secondary" th:href="@{/login}">
+                <i class="fa-solid fa-dashboard me-2"></i>Access Dashboard
+            </a>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="car-showcase">
+            <img src="https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=900&q=80" alt="Luxury Car" class="main-car"/>
+            <div class="floating-elements">
+                <div class="floating-card">
+                    <i class="fa-solid fa-shield-check"></i>
+                    <span>100% Secure</span>
+                </div>
+                <div class="floating-card">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Instant Booking</span>
+                </div>
+                <div class="floating-card">
+                    <i class="fa-solid fa-star"></i>
+                    <span>Premium Service</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="features-section">
+    <div class="container-fluid">
+        <div class="section-header text-center mb-5">
+            <h2 class="section-title">Why Choose DriveGo?</h2>
+            <p class="section-subtitle">Experience the future of car rental with cutting-edge technology and premium service</p>
+        </div>
+        <div class="feature-grid">
+            <article class="feature-card fade-in">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <h3 class="feature-title">Premium Fleet</h3>
+                <p class="feature-desc">From luxury sedans to electric vehicles, our curated collection offers the perfect ride for every occasion.</p>
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=600&q=80" alt="Luxury car"/>
+                </div>
+                <div class="feature-stats">
+                    <span class="stat">500+ Vehicles</span>
+                    <span class="stat">50+ Brands</span>
+                </div>
+            </article>
+            <article class="feature-card fade-in" style="animation-delay: 0.1s;">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </div>
+                <h3 class="feature-title">Smart Dashboard</h3>
+                <p class="feature-desc">Book, manage, and track your rentals with our intuitive dashboard powered by AI technology.</p>
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=600&q=80" alt="Dashboard"/>
+                </div>
+                <div class="feature-stats">
+                    <span class="stat">Real-time Tracking</span>
+                    <span class="stat">Instant Booking</span>
+                </div>
+            </article>
+            <article class="feature-card fade-in" style="animation-delay: 0.2s;">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-shield-check"></i>
+                </div>
+                <h3 class="feature-title">Safety & Security</h3>
+                <p class="feature-desc">Sanitized vehicles, secure payments, and 24/7 concierge support ensure your peace of mind.</p>
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=600&q=80" alt="Safety"/>
+                </div>
+                <div class="feature-stats">
+                    <span class="stat">24/7 Support</span>
+                    <span class="stat">100% Secure</span>
+                </div>
+            </article>
+            <article class="feature-card fade-in" style="animation-delay: 0.3s;">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-gift"></i>
+                </div>
+                <h3 class="feature-title">Exclusive Benefits</h3>
+                <p class="feature-desc">Unlock member-only deals, rewards, and loyalty perks that grow with your usage.</p>
+                <div class="feature-image">
+                    <img src="https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=600&q=80" alt="Offers"/>
+                </div>
+                <div class="feature-stats">
+                    <span class="stat">Loyalty Rewards</span>
+                    <span class="stat">Exclusive Deals</span>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-content text-center">
+            <h2 class="cta-title">Ready to Start Your Journey?</h2>
+            <p class="cta-subtitle">Join thousands of satisfied customers who trust DriveGo for their transportation needs</p>
+            <div class="cta-actions">
+                <a class="btn drivego-btn-primary btn-lg" th:href="@{/register}">
+                    <i class="fa-solid fa-rocket me-2"></i>Get Started Now
+                </a>
+                <a class="btn btn-outline-light btn-lg" th:href="@{/login}">
+                    <i class="fa-solid fa-sign-in-alt me-2"></i>Sign In
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

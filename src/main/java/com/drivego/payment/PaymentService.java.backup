@@ -1,0 +1,171 @@
+package com.drivego.payment;
+
+import com.drivego.booking.CarBookingModel;
+import com.drivego.booking.CarBookingRepository;
+import com.drivego.payment.PaymentDTOS;
+import com.drivego.payment.PaymentModel;
+import com.drivego.payment.PaymentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
+public class PaymentService {
+    
+    private final PaymentRepository paymentRepository;
+    private final CarBookingRepository bookingRepository;
+    
+    @Autowired
+    public PaymentService(PaymentRepository paymentRepository, CarBookingRepository bookingRepository) {
+        this.paymentRepository = paymentRepository;
+        this.bookingRepository = bookingRepository;
+    }
+    
+    @Transactional
+    public PaymentDTOS.Response createPayment(PaymentDTOS.CreateRequest request) {
+        // Get booking
+        Optional<CarBookingModel> bookingOpt = bookingRepository.findById(request.getBookingId());
+        if (!bookingOpt.isPresent()) {
+            throw new RuntimeException("Booking not found with id: " + request.getBookingId());
+        }
+        
+        PaymentModel payment = new PaymentModel();
+        payment.setBooking(bookingOpt.get());
+        payment.setMethodId(request.getMethodId());
+        payment.setAmount(request.getAmount());
+        payment.setPaymentDate(new Date());
+        payment.setPaymentStatus(PaymentModel.PaymentStatus.Pending);
+
+        PaymentModel savedPayment = paymentRepository.save(payment);
+        return convertToResponse(savedPayment);
+    }
+
+    public PaymentDTOS.Response getPaymentById(Integer id) {
+        Optional<PaymentModel> payment = paymentRepository.findByPaymentId(id);
+        if (payment.isPresent()) {
+            return convertToResponse(payment.get());
+        } else {
+            throw new RuntimeException("Payment not found with id: " + id);
+        }
+    }
+    
+    public PaymentDTOS.ListResponse getAllPayments(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("paymentDate").descending());
+        Page<PaymentModel> paymentsPage = paymentRepository.findAll(pageable);
+
+        List<PaymentDTOS.Response> payments = paymentsPage.getContent().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        
+        return new PaymentDTOS.ListResponse(
+            payments,
+            (int) paymentsPage.getTotalElements(),
+            paymentsPage.getNumber(),
+            paymentsPage.getSize()
+        );
+    }
+    
+    @Transactional
+    public void updatePaymentStatus(Integer id, PaymentModel.PaymentStatus status) {
+        Optional<PaymentModel> paymentOpt = paymentRepository.findByPaymentId(id);
+        if (paymentOpt.isPresent()) {
+            PaymentModel payment = paymentOpt.get();
+            payment.setPaymentStatus(status);
+            paymentRepository.save(payment);
+        } else {
+            throw new RuntimeException("Payment not found with id: " + id);
+        }
+    }
+
+    @Transactional
+    public PaymentDTOS.Response updatePaymentStatusWithResponse(Integer id, PaymentModel.PaymentStatus status) {
+        Optional<PaymentModel> paymentOpt = paymentRepository.findByPaymentId(id);
+        if (paymentOpt.isPresent()) {
+            PaymentModel payment = paymentOpt.get();
+            payment.setPaymentStatus(status);
+            PaymentModel updatedPayment = paymentRepository.save(payment);
+            return convertToResponse(updatedPayment);
+        } else {
+            throw new RuntimeException("Payment not found with id: " + id);
+        }
+    }
+    
+    public List<PaymentDTOS.Response> getPaymentsByBookingId(Integer bookingId) {
+        List<PaymentModel> payments = paymentRepository.findByBookingId(bookingId);
+        return payments.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+    
+    public List<PaymentDTOS.Response> getPaymentsByStatus(PaymentModel.PaymentStatus status) {
+        List<PaymentModel> payments = paymentRepository.findByPaymentStatusOrderByPaymentDateDesc(status);
+        return payments.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public BigDecimal getTotalRevenue() {
+        return paymentRepository.getTotalRevenue();
+    }
+    
+    public BigDecimal getRevenueByDateRange(Date startDate, Date endDate) {
+        return paymentRepository.getRevenueByDateRange(startDate, endDate);
+    }
+
+    // Get payments statistics
+    public PaymentDTOS.StatsResponse getPaymentStatistics() {
+        PaymentDTOS.StatsResponse stats = new PaymentDTOS.StatsResponse();
+
+        stats.setTotalPayments(paymentRepository.count());
+        stats.setTotalRevenue(paymentRepository.getTotalRevenue());
+        stats.setPendingPayments(paymentRepository.countByPaymentStatus(PaymentModel.PaymentStatus.Pending));
+        stats.setCompletedPayments(paymentRepository.countByPaymentStatus(PaymentModel.PaymentStatus.Completed));
+        stats.setFailedPayments(paymentRepository.countByPaymentStatus(PaymentModel.PaymentStatus.Failed));
+        stats.setRefundedPayments(paymentRepository.countByPaymentStatus(PaymentModel.PaymentStatus.Refunded));
+
+        return stats;
+    }
+
+    // Process refund
+    @Transactional
+    public PaymentDTOS.Response processRefund(Integer id, String reason) {
+        Optional<PaymentModel> paymentOpt = paymentRepository.findByPaymentId(id);
+        if (paymentOpt.isPresent()) {
+            PaymentModel payment = paymentOpt.get();
+            if (payment.getPaymentStatus() != PaymentModel.PaymentStatus.Completed) {
+                throw new RuntimeException("Only completed payments can be refunded");
+            }
+            payment.setPaymentStatus(PaymentModel.PaymentStatus.Refunded);
+            PaymentModel updatedPayment = paymentRepository.save(payment);
+            return convertToResponse(updatedPayment);
+        } else {
+            throw new RuntimeException("Payment not found with id: " + id);
+        }
+    }
+
+    private PaymentDTOS.Response convertToResponse(PaymentModel payment) {
+        PaymentDTOS.Response response = new PaymentDTOS.Response();
+        response.setId(payment.getPaymentId());
+        response.setBookingId(payment.getBooking() != null ? payment.getBooking().getBookingId() : null);
+        response.setAmount(payment.getAmount());
+        response.setMethodId(payment.getMethodId());
+        response.setPaymentStatus(payment.getPaymentStatus().name());
+        response.setPaymentDate(payment.getPaymentDate());
+        return response;
+    }
+
+    private String generateTransactionId() {
+        return "TXN" + System.currentTimeMillis();
+    }
+}
+
